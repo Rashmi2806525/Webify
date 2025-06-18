@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Webify - Online Code Editor for Web Development with Live Preview
 
-## Getting Started
+## 🚀 Overview
 
-First, run the development server:
+A sleek and powerful browser-based IDE for HTML, CSS, and JavaScript development. This project uses **Next.js**, **Monaco Editor**, and **iframes** to provide an instant live preview of your code as you type.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🎯 Objective
+
+Create a responsive, user-friendly platform where users can:
+
+* Write HTML, CSS, and JS in separate editors
+* Instantly see the output in a live preview window
+* Share code via a unique URL or database
+* Optionally save and manage snippets with cloud storage
+
+## 🛠️ Tech Stack
+
+* **Frontend**: Next.js
+* **Code Editor**: Monaco Editor (VS Code's editor)
+* **Preview Engine**: HTML `<iframe>`
+
+## 📚 Features
+
+* 🔹 Real-time Live Preview (HTML/CSS/JS)
+* 🔹 Monaco Editor Integration (syntax highlighting, autocompletion)
+* 🔹 Responsive Layout (Side-by-side & full preview modes)
+* 🔹 Template Support (start with boilerplates)
+* 🔹 Code Sharing (via URL or database)
+* 🔹 Optional: Save/Load snippets to/from cloud storage
+
+## 📸 Screenshots
+
+> ![Screenshot 2025-06-18 204325](https://github.com/user-attachments/assets/7baa473f-3cb6-4f66-95ae-7efad16df218)
+
+
+## 🧩 Folder Structure (Simplified)
+
+```
+src/
+├── components/
+│   ├── monaco-editor.jsx
+├── App.js
+├── index.js
+public/
+└── index.html
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚧 Future Enhancements
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+* ⏳ User Authentication
+* 🌩 Cloud-based snippet management
+* 🌐 Collaborative coding support
+* 🧠 AI-based code suggestions
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📦 Installation
 
-## Learn More
+```bash
+git clone https://github.com/yourusername/Webify.git
+cd online-code-editor
+npm install
+npm run dev
+```
+---
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> Created with ❤️ by [Debmallya Bhandari](https://github.com/Debmallya-03)
