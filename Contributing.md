@@ -66,7 +66,7 @@ Make sure you have the following installed:
 
 ---
 
-## Project Structure
+## Project Structure (Detailed)
 
 ```
 webify/
