@@ -27,6 +27,7 @@ import {
 import { toast } from 'sonner'
 
 
+import JSZip from "jszip"
 import dynamic from "next/dynamic"
 
 // Dynamically import Monaco Editor to avoid SSR issues
@@ -1031,39 +1032,39 @@ export default function CodeEditor() {
     }
   }
 
-  const downloadCode = () => {
-    const combinedCode = `<!DOCTYPE html>
+  const downloadCode = async () => {
+    const zip = new JSZip();
+    
+    zip.file("index.html", `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Project</title>
-    <style>
-${code.css}
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 ${code.html}
-    <script>
-${code.javascript}
-    </script>
+    <script src="script.js"></script>
 </body>
-</html>`
+</html>`);
+    
+    zip.file("style.css", code.css);
+    zip.file("script.js", code.javascript);
 
-    const blob = new Blob([combinedCode], { type: "text/html" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "project.html"
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    const blob = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "webify-project.zip";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 
     toast("Download started", {
-  description: "Your project has been downloaded as project.html",
-});
-
+      description: "Your project has been downloaded as webify-project.zip",
+    });
   }
 
   const importCode = () => {
