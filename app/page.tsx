@@ -21,6 +21,8 @@ import {
   FileText,
   Palette,
   Zap,
+  Sun,
+  Moon,
 } from "lucide-react"
 import { toast } from 'sonner'
 
@@ -809,7 +811,34 @@ export default function CodeEditor() {
   const [activeTab, setActiveTab] = useState<keyof CodeContent>("html")
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [theme, setTheme] = useState<"light" | "dark">("light")
   const previewRef = useRef<HTMLIFrameElement>(null)
+
+  // Initialize theme from storage/preferences on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+
+    if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+      setTheme("dark")
+      document.documentElement.classList.add("dark")
+    } else {
+      setTheme("light")
+      document.documentElement.classList.remove("dark")
+    }
+  }, [])
+
+  const toggleTheme = () => {
+    if (theme === "light") {
+      setTheme("dark")
+      document.documentElement.classList.add("dark")
+      localStorage.setItem("theme", "dark")
+    } else {
+      setTheme("light")
+      document.documentElement.classList.remove("dark")
+      localStorage.setItem("theme", "light")
+    }
+  }
 
   const updatePreview = useCallback(() => {
     if (!previewRef.current) return
@@ -1041,6 +1070,15 @@ ${code.javascript}
             <Button variant="outline" size="sm" onClick={() => setIsFullscreen(!isFullscreen)}>
               {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleTheme}
+              title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+            >
+              {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-500" />}
+            </Button>
           </div>
         </div>
       </header>
@@ -1080,16 +1118,23 @@ ${code.javascript}
                     language="html"
                     value={code.html}
                     onChange={(value) => handleCodeChange("html", value)}
+                    theme={theme}
                   />
                 </TabsContent>
                 <TabsContent value="css" className="h-full m-0">
-                  <MonacoEditor language="css" value={code.css} onChange={(value) => handleCodeChange("css", value)} />
+                  <MonacoEditor
+                    language="css"
+                    value={code.css}
+                    onChange={(value) => handleCodeChange("css", value)}
+                    theme={theme}
+                  />
                 </TabsContent>
                 <TabsContent value="javascript" className="h-full m-0">
                   <MonacoEditor
                     language="javascript"
                     value={code.javascript}
                     onChange={(value) => handleCodeChange("javascript", value)}
+                    theme={theme}
                   />
                 </TabsContent>
               </div>

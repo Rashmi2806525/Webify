@@ -3,13 +3,44 @@
 import { useEffect, useRef } from "react"
 import * as monaco from "monaco-editor"
 
+if (typeof window !== "undefined") {
+  window.MonacoEnvironment = {
+    getWorkerUrl: function (moduleId: string, label: string) {
+      if (label === "json") {
+        return `data:text/javascript;charset=utf-8,${encodeURIComponent(
+          `self.MonacoEnvironment = { baseUrl: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/' }; importScripts('https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/language/json/json.worker.js');`
+        )}`
+      }
+      if (label === "css" || label === "scss" || label === "less") {
+        return `data:text/javascript;charset=utf-8,${encodeURIComponent(
+          `self.MonacoEnvironment = { baseUrl: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/' }; importScripts('https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/language/css/css.worker.js');`
+        )}`
+      }
+      if (label === "html" || label === "handlebars" || label === "razor") {
+        return `data:text/javascript;charset=utf-8,${encodeURIComponent(
+          `self.MonacoEnvironment = { baseUrl: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/' }; importScripts('https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/language/html/html.worker.js');`
+        )}`
+      }
+      if (label === "typescript" || label === "javascript") {
+        return `data:text/javascript;charset=utf-8,${encodeURIComponent(
+          `self.MonacoEnvironment = { baseUrl: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/' }; importScripts('https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/language/typescript/ts.worker.js');`
+        )}`
+      }
+      return `data:text/javascript;charset=utf-8,${encodeURIComponent(
+        `self.MonacoEnvironment = { baseUrl: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/' }; importScripts('https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/base/worker/workerMain.js');`
+      )}`
+    },
+  }
+}
+
 interface MonacoEditorProps {
   language: string
   value: string
   onChange: (value: string) => void
+  theme?: "light" | "dark"
 }
 
-export default function MonacoEditor({ language, value, onChange }: MonacoEditorProps) {
+export default function MonacoEditor({ language, value, onChange, theme }: MonacoEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   const monacoRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
 
@@ -40,7 +71,7 @@ export default function MonacoEditor({ language, value, onChange }: MonacoEditor
       monacoRef.current = monaco.editor.create(editorRef.current, {
         value,
         language,
-        theme: "custom-light",
+        theme: theme === "dark" ? "custom-dark" : "custom-light",
         automaticLayout: true,
         minimap: { enabled: false },
         fontSize: 14,
@@ -123,23 +154,14 @@ export default function MonacoEditor({ language, value, onChange }: MonacoEditor
     }
   }, [language])
 
-  // Handle theme changes based on system preference
+  // Handle theme changes
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-
-    const updateTheme = () => {
-      if (monacoRef.current) {
-        monacoRef.current.updateOptions({
-          theme: mediaQuery.matches ? "custom-dark" : "custom-light",
-        })
-      }
+    if (monacoRef.current) {
+      monacoRef.current.updateOptions({
+        theme: theme === "dark" ? "custom-dark" : "custom-light",
+      })
     }
-
-    updateTheme()
-    mediaQuery.addEventListener("change", updateTheme)
-
-    return () => mediaQuery.removeEventListener("change", updateTheme)
-  }, [])
+  }, [theme])
 
   return <div ref={editorRef} className="h-full w-full" />
 }
