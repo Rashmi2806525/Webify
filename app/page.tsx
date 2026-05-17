@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useMemo, useRef} from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -927,14 +927,50 @@ document.addEventListener('DOMContentLoaded', function() {
 type LayoutType = "split" | "preview" | "code"
 
 export default function CodeEditor() {
-  const [code, setCode] = useState<CodeContent>(templates[0].content)
+  const [code, setCode] = useState<CodeContent>(() => {
+    if (typeof window === 'undefined') return templates[0].content
+    try {
+      const urlParams = new URLSearchParams(window.location.search)
+      const sharedCode = urlParams.get('code')
+      if (sharedCode) return JSON.parse(atob(sharedCode)) as CodeContent
+    } catch {
+      // invalid share URL — fall through
+    }
+    try {
+      const saved = localStorage.getItem('webify_code')
+      if (saved) return JSON.parse(saved) as CodeContent
+    } catch {
+      // corrupted storage — fall through
+    }
+    return templates[0].content
+  })
+
   const [layout, setLayout] = useState<LayoutType>("split")
   const [activeTab, setActiveTab] = useState<keyof CodeContent>("html")
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [theme, setTheme] = useState<"light" | "dark">("light")
   const previewRef = useRef<HTMLIFrameElement>(null)
+  const codeRef = useRef<CodeContent>(code)
   const htmlValidation = useMemo(() => validateHtmlSyntax(code.html), [code.html])
+// Keep codeRef in sync so beforeunload always has the latest values
+  useEffect(() => {
+    codeRef.current = code
+  }, [code])
 
+  // Auto-save code to localStorage, debounced 500ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem('webify_code', JSON.stringify(code))
+      } catch (err) {
+        // QuotaExceededError — localStorage full, fail silently
+        console.warn('Webify: auto-save failed', err)
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [code])
+
+  // empty deps — registers once, codeRef keeps values fresh
   // Initialize theme from storage/preferences on mount
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null
