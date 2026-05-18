@@ -959,6 +959,7 @@ export default function CodeEditor() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [theme, setTheme] = useState<"light" | "dark">("light")
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [autoRun, setAutoRun] = useState(true)
   const previewRef = useRef<HTMLIFrameElement>(null)
   const activeEditorRef = useRef<{
     focus: () => void
@@ -1013,6 +1014,7 @@ export default function CodeEditor() {
 
   useEffect(() => {
     if (!previewRef.current) return
+    if (!autoRun) return
 
     if (!htmlValidation.isValid) {
       previewRef.current.srcdoc = createPreviewErrorHtml(htmlValidation.message ?? "Invalid HTML syntax.")
@@ -1040,7 +1042,38 @@ export default function CodeEditor() {
     previewRef.current.src = url
 
     return () => URL.revokeObjectURL(url)
-  }, [code, htmlValidation])
+  }, [code, htmlValidation, autoRun])
+
+const runCodeManually = () => {
+  if (!previewRef.current) return
+
+  if (!htmlValidation.isValid) {
+    previewRef.current.srcdoc = createPreviewErrorHtml(
+      htmlValidation.message ?? "Invalid HTML syntax."
+    )
+    return
+  }
+
+  const combinedCode = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Live Preview</title>
+      <style>${code.css}</style>
+    </head>
+    <body>
+      ${code.html}
+      <script>${code.javascript}</script>
+    </body>
+    </html>
+  `
+
+  const blob = new Blob([combinedCode], { type: "text/html" })
+  const url = URL.createObjectURL(blob)
+  previewRef.current.src = url
+}
 
   const handleCodeChange = (language: keyof CodeContent, value: string) => {
     setCode((prev) => ({ ...prev, [language]: value }))
@@ -1501,22 +1534,27 @@ ${code.html}
           <div className={`${layout === "split" ? "w-1/2" : "w-full"} flex flex-col`}>
             <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Play className="w-4 h-4 text-green-600" />
-                <span className="font-medium text-gray-900 dark:text-white">Live Preview</span>
-                {htmlValidation.isValid ? (
-                  <Badge variant="secondary" className="text-xs">
-                    Auto-refresh
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive" className="text-xs">
-                    HTML syntax error
-                  </Badge>
-                )}
-              </div>
-              <Button variant="outline" size="sm" onClick={() => window.open(previewRef.current?.src, "_blank")}>
-                <Maximize2 className="w-4 h-4 mr-2" />
-                Open in new tab
-              </Button>
+  <Play className="w-4 h-4 text-green-600" />
+  <span className="font-medium text-gray-900 dark:text-white">Live Preview</span>
+
+  <Badge variant="secondary" className="text-xs">
+  {autoRun ? "Auto-refresh" : "Manual"}
+</Badge>
+
+<Button
+  variant="outline"
+  size="sm"
+  onClick={() => setAutoRun(!autoRun)}
+>
+  {autoRun ? "Pause" : "Resume"}
+</Button>
+
+  {!autoRun && (
+    <Button size="sm" variant="default" onClick={runCodeManually}>
+      Run
+    </Button>
+  )}
+</div>
             </div>
             <div className="flex-1 bg-white">
               <iframe
