@@ -1559,55 +1559,14 @@ ${code.html}
                   Open in new tab
                 </Button>
               </div>
-
-            </Tabs>
-          </div>
-        )}
-
-        {/* Preview */}
-        {(layout === "preview" || layout === "split") && (
-          <div className={`${layout === "split" ? "w-1/2" : "w-full"} flex flex-col`}>
-            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-  <Play className="w-4 h-4 text-green-600" />
-  <span className="font-medium text-gray-900 dark:text-white">Live Preview</span>
-
-  <Badge variant="secondary" className="text-xs">
-  {autoRun ? "Auto-refresh" : "Manual"}
-</Badge>
-
-<Button
-  variant="outline"
-  size="sm"
-  onClick={() => setAutoRun(!autoRun)}
->
-  {autoRun ? "Pause" : "Resume"}
-</Button>
-
-  {!autoRun && (
-    <Button size="sm" variant="default" onClick={runCodeManually}>
-      Run
-    </Button>
-  )}
-</div>
-            </div>
-            <div className="flex-1 bg-white">
-              <iframe
-                ref={previewRef}
-                className="w-full h-full border-0"
-                title="Live Preview"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-              />
-
               <div className="flex-1 bg-white">
                 <iframe
                   ref={previewRef}
                   className="w-full h-full border-0"
                   title="Live Preview"
-                  sandbox="allow-scripts allow-forms allow-popups allow-modals"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
                 />
               </div>
-
             </div>
           )}
         </div>
