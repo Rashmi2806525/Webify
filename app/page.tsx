@@ -7,9 +7,10 @@ const safeBase64Encode = (str: string) =>
 const safeBase64Decode = (str: string) =>
   decodeURIComponent(escape(atob(str)));
 
+
 import type React from "react"
 
-import { useState, useEffect, useMemo, useRef } from "react"
+import { useState, useEffect, useMemo, useRef,useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -351,7 +352,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
-            e.preventDefault();
             const targetId = this.getAttribute('href');
             const targetElement = document.querySelector(targetId);
             
@@ -968,7 +968,36 @@ export default function CodeEditor() {
   const [theme, setTheme] = useState<"light" | "dark">("light")
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [autoRun, setAutoRun] = useState(true)
-  const previewRef = useRef<HTMLIFrameElement>(null)
+  const [editorWidth, setEditorWidth] = useState(50)
+  const isDragging = useRef(false)
+  const [isResizing, setIsResizing] = useState(false)
+const containerRef = useRef<HTMLDivElement>(null)
+const previewRef = useRef<HTMLIFrameElement>(null)
+
+const handleMouseDown = () => {
+  isDragging.current = true;
+  setIsResizing(true);
+  document.body.style.userSelect = "none";
+  document.body.style.cursor = "col-resize";
+};
+
+const handleMouseMove = useCallback((e: globalThis.MouseEvent) => {
+  if (!isDragging.current || !containerRef.current) return;
+
+  const rect = containerRef.current.getBoundingClientRect();
+  const newWidth = ((e.clientX - rect.left) / rect.width) * 100;
+
+  const clampedWidth = Math.max(20, Math.min(80, newWidth));
+  setEditorWidth(clampedWidth);
+}, [setEditorWidth]);
+
+const handleMouseUp = useCallback(() => {
+  isDragging.current = false;
+  setIsResizing(false);
+  document.body.style.userSelect = "auto";
+  document.body.style.cursor = "default";
+}, []);
+
   const activeEditorRef = useRef<{
     focus: () => void
     trigger: (source: string, handlerId: string, payload?: unknown) => void
@@ -979,7 +1008,15 @@ export default function CodeEditor() {
   useEffect(() => {
     codeRef.current = code
   }, [code])
+useEffect(() => {
+  window.addEventListener("mousemove", handleMouseMove);
+  window.addEventListener("mouseup", handleMouseUp);
 
+  return () => {
+    window.removeEventListener("mousemove", handleMouseMove);
+    window.removeEventListener("mouseup", handleMouseUp);
+  };
+}, [handleMouseMove, handleMouseUp]);
   // Auto-save code to localStorage, debounced 500ms
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -1470,6 +1507,110 @@ ${code.html}
         </header>
 
         {/* Main Content */}
+
+       <div
+  ref={containerRef}
+  className="flex-1 flex overflow-hidden"
+ 
+>
+
+{/* CODE EDITOR */}
+{(layout === "code" || layout === "split") && (
+  <div
+    style={{ width: layout === "split" ? `${editorWidth}%` : "100%" }}
+    className="flex flex-col border-r border-gray-200 dark:border-gray-700"
+  >
+    <Tabs
+      value={activeTab}
+      onValueChange={(value) => setActiveTab(value as keyof CodeContent)}
+      className="flex-1 flex flex-col"
+    >
+      {/* Tabs Header */}
+      <div className="bg-white dark:bg-gray-800 border-b px-4">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="html">HTML</TabsTrigger>
+          <TabsTrigger value="css">CSS</TabsTrigger>
+          <TabsTrigger value="javascript">JS</TabsTrigger>
+        </TabsList>
+      </div>
+
+      {/* Tabs Content */}
+      <div className="flex-1">
+        <TabsContent value="html" className="h-full m-0">
+          <MonacoEditor
+            language="html"
+            value={code.html}
+            onChange={(value) => handleCodeChange("html", value)}
+            theme={theme}
+            onEditorReady={(ed) => (activeEditorRef.current = ed)}
+          />
+        </TabsContent>
+
+        <TabsContent value="css" className="h-full m-0">
+          <MonacoEditor
+            language="css"
+            value={code.css}
+            onChange={(value) => handleCodeChange("css", value)}
+            theme={theme}
+            onEditorReady={(ed) => (activeEditorRef.current = ed)}
+          />
+        </TabsContent>
+
+        <TabsContent value="javascript" className="h-full m-0">
+          <MonacoEditor
+            language="javascript"
+            value={code.javascript}
+            onChange={(value) => handleCodeChange("javascript", value)}
+            theme={theme}
+            onEditorReady={(ed) => (activeEditorRef.current = ed)}
+          />
+        </TabsContent>
+      </div>
+    </Tabs>
+  </div>
+)}
+
+  {/* 🔥 RESIZE DIVIDER */}
+  {layout === "split" && (
+   <div
+  onMouseDown={handleMouseDown}
+  onDragStart={(e) => e.preventDefault()}
+  className="w-2 cursor-col-resize bg-gray-300 dark:bg-gray-600 hover:bg-blue-500 active:bg-blue-600 transition"
+style={{ minWidth: "8px" }}
+/>
+  )}
+
+  {/* PREVIEW */}
+  {(layout === "preview" || layout === "split") && (
+    <div
+      style={{ width: layout === "split" ? `${100 - editorWidth}%` : "100%" }}
+      className="flex flex-col"
+    >
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Play className="w-4 h-4 text-green-600" />
+          <span className="font-medium text-gray-900 dark:text-white">
+            Live Preview
+          </span>
+
+          <Badge variant="secondary" className="text-xs">
+            {autoRun ? "Auto-refresh" : "Manual"}
+          </Badge>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setAutoRun(!autoRun)}
+          >
+            {autoRun ? "Pause" : "Resume"}
+          </Button>
+
+          {!autoRun && (
+            <Button size="sm" onClick={runCodeManually}>
+              Run
+            </Button>
+          )}
+
         <div className="flex-1 flex overflow-hidden">
           {/* Code Editor */}
           {(layout === "code" || layout === "split") && (
@@ -1571,8 +1712,27 @@ ${code.html}
             </div>
           </div>
         )}
+
         </div>
+      </div>
+
+      <div className={`flex-1 bg-white ${isResizing ? "pointer-events-none" : ""}`}>
+        <iframe
+  ref={previewRef}
+  className={`w-full h-full border-0 ${isResizing ? "pointer-events-none" : ""}`}
+  title="Live Preview"
+  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+/>
+      </div>
+    </div>
+  )}
+
+</div>
       </div>
     </>
   )
 }
+
+        
+
+               
