@@ -1673,17 +1673,16 @@ style={{ minWidth: "8px" }}
             </Button>
           )}
 
-
         </div>
       </div>
 
       <div className={`flex-1 bg-white ${isResizing ? "pointer-events-none" : ""}`}>
         <iframe
-  ref={previewRef}
-  className={`w-full h-full border-0 ${isResizing ? "pointer-events-none" : ""}`}
-  title="Live Preview"
-  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-/>
+          ref={previewRef}
+          className={`w-full h-full border-0 ${isResizing ? "pointer-events-none" : ""}`}
+          title="Live Preview"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+        />
       </div>
     </div>
   )}
@@ -1693,7 +1692,3 @@ style={{ minWidth: "8px" }}
     </>
   )
 }
-
-        
-
-               
