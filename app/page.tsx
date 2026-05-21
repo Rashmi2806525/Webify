@@ -1031,6 +1031,20 @@ export default function CodeEditor() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [autoRun, setAutoRun] = useState(true)
   const [editorWidth, setEditorWidth] = useState(50)
+  // Tracks which template is currently active
+  const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(null)
+
+  // Per-template memory: stores the user's last-edited code for each template
+  const [templateSnapshots, setTemplateSnapshots] = useState<Record<string, CodeContent>>(() => {
+    if (typeof window === 'undefined') return {}
+    try {
+      const saved = localStorage.getItem('webify_template_snapshots')
+      if (saved) return JSON.parse(saved) as Record<string, CodeContent>
+    } catch {
+      // corrupted storage — fall through
+    }
+    return {}
+  })
   const isDragging = useRef(false)
   const [isResizing, setIsResizing] = useState(false)
 const containerRef = useRef<HTMLDivElement>(null)
@@ -1091,6 +1105,17 @@ useEffect(() => {
     }, 500)
     return () => clearTimeout(timer)
   }, [code])
+  // Auto-save per-template snapshots to localStorage, debounced 500ms
+useEffect(() => {
+  const timer = setTimeout(() => {
+    try {
+      localStorage.setItem('webify_template_snapshots', JSON.stringify(templateSnapshots))
+    } catch (err) {
+      console.warn('Webify: template snapshot save failed', err)
+    }
+  }, 500)
+  return () => clearTimeout(timer)
+}, [templateSnapshots])
 
   // empty deps — registers once, codeRef keeps values fresh
   // Initialize theme from storage/preferences on mount
@@ -1186,13 +1211,22 @@ const runCodeManually = () => {
     setCode((prev) => ({ ...prev, [language]: value }))
   }
 
-  const loadTemplate = (template: Template) => {
-    setCode(template.content)
-    toast("Template loaded", {
-      description: `${template.name} template has been loaded successfully.`,
-    });
-
+  // AFTER
+const loadTemplate = (template: Template) => {
+  // Save the current template's edits before switching away
+  if (currentTemplateId) {
+    setTemplateSnapshots(prev => ({ ...prev, [currentTemplateId]: code }))
   }
+
+  // Restore the user's last edits for this template, or fall back to its default content
+  const savedSnapshot = templateSnapshots[template.id]
+  setCode(savedSnapshot ?? template.content)
+  setCurrentTemplateId(template.id)
+
+  toast("Template loaded", {
+    description: `${template.name} template has been loaded successfully.`,
+  })
+}
 
 
   const downloadCode = async () => {
